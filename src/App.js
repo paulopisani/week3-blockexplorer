@@ -35,7 +35,7 @@ function App() {
     }
     
     async function getBlockHash() {
-      console.log('#############', block);
+     // console.log('#############', block);
       setBlockHash(block.hash.toString().slice(0,10));
     }  
 
@@ -51,7 +51,7 @@ function App() {
     getBlockHash();
     getBlockTransactions();
     getBlockTimestamp();
-    console.log('***********************',blockHash)
+   // console.log('***********************',blockHash)
 
   });
 
@@ -65,34 +65,5 @@ function App() {
       </div> 
   );
 }
-/*
-  return (
-    <Router>
-      <div className="App">
-      <Header />
-        <div className="container">
-          <Routes>
-            <Route path='/' element={
-              <>
-                <Blocks blocks={latestBlocks} convTimestamp={convertTimestamp} selectBlock={selectBlock} />
-              </>
-            } />
-            <Route path='/block/:id' element={
-                <>
-                  <Block block={showBlock} convTimestamp={convertTimestamp} setTransaction={setShowTransaction}/>
-                </>
-            }/>
-            <Route path='/transaction/:transactionHash' element={
-              <>
-                <TransactionDeteils transaction={showTransaction} convTimestamp={convertTimestamp} />
-              </>
-            }/>
-          </Routes>
-        </div>
-      </div>
-    </Router>
-  )
-}
-*/
 
 export default App;
