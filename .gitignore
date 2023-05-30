@@ -19,6 +19,9 @@
 .env.test.local
 .env.production.local
 
+#temp PJP files
+PJP_*
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
