@@ -1,7 +1,6 @@
 import { Alchemy, Network } from 'alchemy-sdk';
 import { useEffect, useState } from 'react';
 
-
 import './App.css';
 
 // Refer to the README doc for more information about using API
@@ -12,8 +11,6 @@ const settings = {
   network: Network.ETH_MAINNET,
 };
 
-
-// In this week's lessons we used ethers.js. Here we are using the
 // Alchemy SDK is an umbrella library with several different packages.
 //
 // You can read more about the packages here:
@@ -22,47 +19,96 @@ const alchemy = new Alchemy(settings);
 
 function App() {
   const [blockNumber, setBlockNumber] = useState();
-  const [blockHash, setBlockHash] = useState();
-  //const [] = useState();
-  const [blockTransactions, setBlockTransactions] = useState();
-  const [blockTimestamp, setBlockTimestamp] = useState();
+  const [block, setBlock] = useState();
+  const [transactions, setTransactions] = useState([]);
+  const [selectedTransaction, setSelectedTransaction] = useState('');
 
-  useEffect(async () => {
-    const block = await alchemy.core.getBlock(blockNumber);
-    
+
+  //This useEffect hook runs once when the component is mounted.
+  useEffect(() => {
     async function getBlockNumber() {
-      setBlockNumber(await alchemy.core.getBlockNumber());
+      try {
+        const latestBlockNumber = await alchemy.core.getBlockNumber();
+        setBlockNumber(latestBlockNumber);
+      } catch (error) {
+        console.error('Error retrieving block number:', error);
+      }
     }
-    
-    async function getBlockHash() {
-     // console.log('#############', block);
-      setBlockHash(block.hash.toString().slice(0,10));
-    }  
-
-    async function getBlockTransactions() {
-      setBlockTransactions((block.transactions).toString().slice(0,10));
-    }  
-
-    async function getBlockTimestamp() {
-      setBlockTimestamp(block.timestamp);
-    }  
 
     getBlockNumber();
-    getBlockHash();
-    getBlockTransactions();
-    getBlockTimestamp();
-   // console.log('***********************',blockHash)
+  }, []);
 
-  });
 
-  //return <div className="App">Block Number: {blockNumber}</div><div className="App">Block Info: {blockInfo}</div> ;
+  //whenever the blockNumber state variable changes thos useEffect will run
+  useEffect(() => {
+    async function getBlock() {
+      if (blockNumber) {
+        try {
+          const blockData = await alchemy.core.getBlockWithTransactions(blockNumber);
+          setBlock(blockData);
+          setTransactions(blockData.transactions);
+          setSelectedTransaction('');
+        } catch (error) {
+          console.error(`Error retrieving block ${blockNumber}:`, error);
+        }
+      }
+    }
+
+    getBlock();
+  }, [blockNumber]);
+
+  // that takes a txHash parameter. It retrieves the transaction receipt 
+  // and sets the transaction state variable with the result
+  async function getTransaction(txHash) {
+    try {
+      const transactionData = await alchemy.core.getTransactionReceipt(txHash);
+      setSelectedTransaction(transactionData);
+    } catch (error) {
+      console.error('Error retrieving transaction:', error);
+    }
+  }
+
   return (
     <div className="App">
-        <h1> Block Number: {blockNumber} </h1>
-        <h2> Block Hash: {blockHash}... </h2>
-        <h3> Block Transactions: {blockTransactions}...</h3>
-        <h4> Block Timestamp: {blockTimestamp}</h4>
-      </div> 
+      <h1>Ethereum Block Explorer</h1>
+      {blockNumber && (
+        <div>
+          <h2>Current Block Number: {blockNumber}</h2>
+          {block && (
+            <div>
+              <h3>Block Details</h3>
+              <p>Block Hash: {block.hash}</p>
+              <p>Block Timestamp: {new Date(block.timestamp * 1000).toLocaleString()}</p>
+              <p>Number of Transactions: {block.transactions.length}</p>
+              <h4>Transactions</h4>
+              {transactions.length > 0 ? (
+                <select value={selectedTransaction} onChange={(e) => getTransaction(e.target.value)}>
+                  <option value="">Select a transaction</option>
+                  {transactions.map((tx) => (
+                    <option key={tx.hash} value={tx.hash}>
+                      {tx.hash}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p>No transactions found in this block.</p>
+              )}
+            </div>
+          )}
+          {selectedTransaction && (
+            <div>
+              <h3>Transaction Details</h3>
+              <p>Transaction Hash: {selectedTransaction.transactionHash}</p>
+              <p>Block Number: {selectedTransaction.blockNumber}</p>
+              <p>From: {selectedTransaction.from}</p>
+              <p>To: {selectedTransaction.to}</p>
+              <p>Value: {selectedTransaction.value}</p>
+            </div>
+          )}
+        </div>
+      )}
+      {!blockNumber && <p>Loading...</p>}
+    </div>
   );
 }
 
